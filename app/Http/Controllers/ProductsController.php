@@ -53,31 +53,32 @@ class ProductsController extends Controller
             'name' => 'required',
             'category' => 'required',
             'description' => 'required',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048'
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'date_time' => 'required'
         ]);
 
-        $product = Product::create([
+        $product_arr = [
             'name' => $validatedData['name'],
             'category' => $validatedData['category'],
-            'description' => $validatedData['description']
-        ]);
+            'description' => $validatedData['description'],
+            'images' => null,
+            'date_time' => $validatedData['date_time']
+        ];
 
+        // Handle product images
         if ($request->hasFile('images')) {
-            $images = [];
-
             foreach ($request->file('images') as $image) {
                 $path = $image->store('public/images');
-                $images[] = [
-                    'path' => $path,
-                    'url' => asset('storage/' . $path)
-                ];
+                $product_arr['images'] = $path;
             }
-            // Save the image paths in the database
-            $product->images()->createMany($images);
         }
+
+        // Create the product
+        $product = Product::create($product_arr);
 
         return response()->json(['message' => 'Product created successfully'], 200);
     }
+
 
     /**
      * Display the specified resource.
@@ -126,9 +127,20 @@ class ProductsController extends Controller
     {
         //
         try {
+            $product = Product::find($id);
 
+            return response()->json([
+                'success' => true,
+                'data' => $product,
+                'server_response' => 'ok'
+            ]);
         } catch (\Exception $e) {
-
+            return response()->json([
+                'success' => false,
+                'message' => $e,
+                'line_error' => $e->getLine(),
+                'server_response' => 'error'
+            ]);
         }
     }
 
@@ -137,31 +149,44 @@ class ProductsController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
         try {
+            $product = Product::find($id);
 
-            $product_id = Product::find($id);
-
-            if($request->hasFile('image'))
-            {
-
+            if (!$product) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Product not found',
+                ]);
             }
 
-            $product_id->update([
-                'name' => $request->get('name'),
-                'description' => $request->get('description'),
-                'category' => $request->get('category'),
-                'image' => $request->get('image'),
-                'date_time' => $request->get('date_time')
-            ]);
+            $product->name = $request->get('name');
+            $product->category = $request->get('category');
+            $product->description = $request->get('description');
+            $product->date_time = $request->get('date_time');
 
-        } catch (\Exception $e)
-        {
+            // Handle product images
+            if ($request->hasFile('images')) {
+                $imagePaths = [];
+
+                foreach ($request->file('images') as $image) {
+                    $path = $image->store('public/images');
+                    $imagePaths[] = $path;
+                }
+
+                $product->images = $imagePaths;
+            }
+
+            $product->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Product has been updated',
+            ]);
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e,
+                'message' => $e->getMessage(),
                 'line_error' => $e->getLine(),
-                'server_response' => 'error'
             ]);
         }
     }

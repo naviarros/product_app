@@ -15,10 +15,11 @@ class Product extends Model
         "name",
         "category",
         "description",
-        "images"
+        "images",
+        "date_time"
     ];
 
-    protected $dates = ["date_time", "created_at", "updated_at"];
+    protected $dates = ["created_at", "updated_at"];
 
     public $timestamp = false;
 }
