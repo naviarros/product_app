@@ -9,10 +9,10 @@ npm install && npm run dev
 php artisan migrate
 
 # After migrating the migrations, to create seeder for user
-php artisan db:seed UserSeeder
+php artisan db:seed --class=UserSeeder
 
 # To create seeder for products, run
-php artisan db:seed ProductSeeder
+php artisan db:seed --class=ProductSeeder
 
 # After creating seeder, run now the application
 php artisan serve
